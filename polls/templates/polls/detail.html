@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ question.question_text }}</title>
+    <link rel="stylesheet" href="/static/polls/styles.css">
+</head>
+<body>
+    <!-- Навигационная панель -->
+    <nav class="navbar">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'polls:index' %}">Polls</a>
+            <div class="navbar-links">
+                {% if user.is_authenticated %}
+                    <a class="nav-link" href="{% url 'polls:edit_profile' %}">
+                        <div class="avatar-container">
+                            {% if user.userprofile.avatar %}
+                                <img src="{{ user.userprofile.avatar.url }}" alt="Avatar" class="avatar">
+                            {% else %}
+                                <img src="static/polls/default_avatar.jpg" alt="Default Avatar" class="avatar">
+                            {% endif %}
+                        </div>
+                        Профиль
+                    </a>
+                    <form method="post" action="{% url 'polls:logout' %}" class="form-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-link nav-link">Выйти</button>
+                    </form>
+                {% else %}
+                    <a class="nav-link" href="{% url 'polls:login' %}">Войти</a>
+                    <a class="nav-link" href="{% url 'polls:register' %}">Регистрация</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <!-- Основной контейнер -->
+    <div class="container">
+        <h1 class="mt-4">{{ question.question_text }}</h1>
+
+        <!-- Если вопрос имеет изображение -->
+        {% if question.image %}
+        <div class="full-image-container">
+            <img src="{{ question.image.url }}" class="full-image" alt="{{ question.question_text }}">
+        </div>
+        {% endif %}
+
+        <!-- Описание вопроса -->
+        <p>{{ question.description }}</p>
+
+        <!-- Сообщение об ошибке -->
+        {% if error_message %}
+        <p class="error-message"><strong>{{ error_message }}</strong></p>
+        {% endif %}
+
+        <!-- Если пользователь не авторизован -->
+        {% if not request.user.is_authenticated %}
+            <p><strong>Вы должны быть авторизованы, чтобы голосовать.</strong></p>
+        {% else %}
+            <!-- Форма для голосования -->
+            <form action="{% url 'polls:vote' question.id %}" method="post">
+                {% csrf_token %}
+                <fieldset>
+                    {% for choice in question.choice_set.all %}
+                    <div class="form-group">
+                        <input type="radio" name="choice" id="choice{{ forloop.counter }}" value="{{ choice.id }}">
+                        <label for="choice{{ forloop.counter }}">{{ choice.choice_text }}</label>
+                    </div>
+                    {% endfor %}
+                </fieldset>
+                <div class="form-group">
+                    <input type="submit" class="btn" value="Vote">
+                </div>
+            </form>
+        {% endif %}
+
+        <!-- Ссылки на результаты и главную -->
+        <a href="{% url 'polls:results' question.id %}" class="btn btn-link">Посмотреть результаты</a>
+    </div>
+</body>
+</html>
